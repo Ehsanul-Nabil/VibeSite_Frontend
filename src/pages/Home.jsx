@@ -42,7 +42,7 @@ function Home() {
       >
         <div className='max-w-7xl mx-auto px-6 py-4 flex justify-between items-center'>
           <div className='text-lg font-semibold'>
-            GenWeb.ai
+            VibeSite.AI
           </div>
           <div className='flex items-center gap-5'>
             <div className='hidden md:inline text-sm text-zinc-400 hover:text-white cursor-pointer'>
@@ -144,7 +144,7 @@ function Home() {
             >
               <h1 className='text-xl font-semibold mb-3'>{h}</h1>
               <p className='text-sm text-zinc-400'>
-                GenWeb.ai builds real websites – clean code,
+                VibeSite.ai builds real websites – clean code,
                 animations, responsiveness and scalable structure.
               </p>
             </motion.div>
@@ -153,7 +153,7 @@ function Home() {
       </section>
 
       <footer className='border-t border-white/10 py-10 text-center text-sm text-zinc-500'>
-        &copy; {new Date().getFullYear()} GenWeb.ai
+        &copy; {new Date().getFullYear()} VibeSite.AI
       </footer>
 
       {openLogin && <LoginModal open={openLogin} onClose={()=>setOpenLogin(false)}/> }
