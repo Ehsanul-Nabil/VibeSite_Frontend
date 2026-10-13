@@ -1,136 +1,63 @@
-
-// import { useState, useEffect, useRef } from 'react'
-// import { useParams } from 'react-router-dom'
-// import axios from 'axios'
-// import { Rocket, Code2, Monitor } from 'lucide-react'
-// import { serverUrl } from '../App'
-
-// function Editor() {
-//     const { id } = useParams()
-//     const [website, setWebsite] = useState(null)
-//     const [error, setError] = useState("")
-//     const iframeRef = useRef(null)
-
-//     useEffect(() => {
-//         const handleGetWebsite = async () => {
-//             try {
-//                 const result = await axios.get(`${serverUrl}/api/website/get-by-id/${id}`, { withCredentials: true })
-//                 setWebsite(result.data)
-//             } catch (error) {
-//                 console.log(error)
-//                 setError(error.response?.data?.message || "Something went wrong")
-//             }
-//         }
-//         handleGetWebsite()
-//     }, [id])
-
-//     useEffect(() => {
-//         if (!iframeRef.current || !website?.latestCode) return;
-
-//         const blob = new Blob([website.latestCode], { type: "text/html" })
-//         const url = URL.createObjectURL(blob)
-//         iframeRef.current.src = url
-
-//         return () => URL.revokeObjectURL(url)
-//     }, [website?.latestCode])
-
-//     function Header() {
-//         return (
-//             <div className='h-14 px-4 flex items-center justify-between border-b border-white/10'>
-//                 <span>{website?.title}</span>
-//             </div>
-//         )
-//     }
-
-//     function Chat() {
-//         return (
-//             <div className='flex-1 overflow-y-auto px-4 py-4 space-y-4'>
-//                 {website?.conversation.map((m, i) => (
-//                     <div
-//                         key={i}
-//                         className={`max-w-[85%] ${
-//                             m.role === "user" ? "ml-auto" : "mr-auto"
-//                         }`}
-//                     >
-//                         <div
-//                             className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${
-//                                 m.role === "user"
-//                                     ? "bg-white text-black"
-//                                     : "bg-white/5 border border-white/10 text-zinc-200"
-//                             }`}
-//                         >
-//                             {m.content}
-//                         </div>
-//                     </div>
-//                 ))}
-
-
-//             </div>
-//         )
-//     }
-
-//     if (error) {
-//         return (
-//             <div className='h-screen flex items-center justify-center bg-black text-red-400'>
-//                 {error}
-//             </div>
-//         )
-//     }
-
-//     if (!website) {
-//         return (
-//             <div className='h-screen flex items-center justify-center bg-black text-white'>
-//                 Loading...
-//             </div>
-//         )
-//     }
-
-//     return (
-//         <div className='h-screen w-screen flex bg-black text-white overflow-hidden'>
-//             <aside>
-//                 <Header />
-//                 <Chat />
-//             </aside>
-
-//             <div className='flex-1 flex flex-col'>
-//                 <div className='h-14 px-4 flex justify-between items-center border-b border-white/10 bg-black/80'>
-//                     <span className='text-xs text-zinc-400'>Live Preview</span>
-//                     <div className='flex gap-2'>
-//                         <button className='flex items-center gap-2 px-4 py-1.5 rounded-lg bg-linear-to-r from-indigo-500 to-purple-500 text-sm font-semibold hover:scale-105 transition'>
-//                             <Rocket size={14} /> Deploy
-//                         </button>
-//                         <button className='p-2'><Code2 size={18} /></button>
-//                         <button className='p-2'><Monitor size={18} /></button>
-//                     </div>
-//                 </div>
-
-//                 <iframe ref={iframeRef} className='flex-1 w-full bg-white' />
-//             </div>
-//         </div>
-//     )
-// }
-
-// export default Editor
-
-
-
 import { useState, useEffect, useRef } from 'react'
 import { useParams } from 'react-router-dom'
 import axios from 'axios'
-import { Rocket, Code2, Monitor } from 'lucide-react'
+import { Rocket, Code2, Monitor, Send } from 'lucide-react'
 import { serverUrl } from '../App'
 
 function Editor() {
     const { id } = useParams()
     const [website, setWebsite] = useState(null)
     const [error, setError] = useState("")
+    const [code,setCode] = useState([])
+    const [messages,setMessages]=useState([])
+    const [prompt,setPrompt]=useState("")
     const iframeRef = useRef(null)
+    const [updateLoading, setUpdateLoading] = useState(false)
+    const [thinkingIndex, setThinkingIndex] = useState(0)
+    const thinkingSteps = [
+        "Understanding your request...",
+        "Planning layout changes...",
+        "Improving responsiveness...",
+        "Applying animations...",
+        "Finalizing update...",
+    ]
+
+    const handleUpdate = async () => {
+        if(!prompt) return 
+        setUpdateLoading(true)
+        const text=prompt;
+        setPrompt("")
+        setMessages((m) => [...m, { role: "user", content: prompt }])
+        try {
+            const result = await axios.post(`${serverUrl}/api/website/update/${id}`, { prompt:text }, {
+                withCredentials: true
+            })
+            console.log(result)
+            setUpdateLoading(false)
+            setMessages((m) => [...m, { role: "ai", content: result.data.message }])
+            setCode(result.data.code)
+        } catch (error) {
+            setUpdateLoading(false)
+            console.log(error)
+        }
+    }
+
+    useEffect(() => {
+        if(!updateLoading)return 
+        const i = setInterval(() => {
+            setThinkingIndex((i) => (i + 1) % thinkingSteps.length)
+        }, 1200)
+
+        return () => clearInterval(i)
+    }, [updateLoading])
 
     useEffect(() => {
         const handleGetWebsite = async () => {
             try {
                 const result = await axios.get(`${serverUrl}/api/website/get-by-id/${id}`, { withCredentials: true })
                 setWebsite(result.data)
+                setCode(result.data.latestCode)
+                setMessages(result.data.conversation)
             } catch (error) {
                 console.log(error)
                 setError(error.response?.data?.message || "Something went wrong")
@@ -140,14 +67,14 @@ function Editor() {
     }, [id])
 
     useEffect(() => {
-        if (!iframeRef.current || !website?.latestCode) return;
+        if (!iframeRef.current || !code) return;
 
-        const blob = new Blob([website.latestCode], { type: "text/html" })
+        const blob = new Blob([code], { type: "text/html" })
         const url = URL.createObjectURL(blob)
         iframeRef.current.src = url
 
         return () => URL.revokeObjectURL(url)
-    }, [website?.latestCode])
+    }, [code])
 
     function Header() {
         return (
@@ -157,45 +84,6 @@ function Editor() {
         )
     }
 
-    function Chat() {
-        return (
-            <>
-                <div className='flex-1 overflow-y-auto px-4 py-4 space-y-4'>
-                    {website?.conversation.map((m, i) => (
-                        <div
-                            key={i}
-                            className={`max-w-[85%] ${
-                                m.role === "user" ? "ml-auto" : "mr-auto"
-                            }`}
-                        >
-                            <div
-                                className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${
-                                    m.role === "user"
-                                        ? "bg-white text-black"
-                                        : "bg-white/5 border border-white/10 text-zinc-200"
-                                }`}
-                            >
-                                {m.content}
-                            </div>
-                        </div>
-                    ))}
-                </div>
-
-                <div className='p-3 border-t border-white/10'>
-                    <div className='flex gap-2'>
-                        <textarea
-                            rows="1"
-                            placeholder='Describe Changes...'
-                            className='flex-1 resize-none rounded-2xl px-4 py-3 bg-white/5 border border-white/10 text-white outline-none'
-                        />
-                        <button className='px-4 py-3 rounded-2xl bg-white text-black font-medium'>
-                            Send
-                        </button>
-                    </div>
-                </div>
-            </>
-        )
-    }
 
     if (error) {
         return (
@@ -217,7 +105,55 @@ function Editor() {
         <div className='h-screen w-screen flex bg-black text-white overflow-hidden'>
             <aside className='hidden lg:flex w-[380px] flex-col border-r border-white/10 bg-black/80'>
                 <Header />
-                <Chat />
+                
+
+            <>
+                <div className='flex-1 overflow-y-auto px-4 py-4 space-y-4'>
+                    {messages.map((m, i) => (
+                        <div
+                            key={i}
+                            className={`max-w-[85%] ${
+                                m.role === "user" ? "ml-auto" : "mr-auto"
+                            }`}
+                        >
+                            <div
+                                className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${
+                                    m.role === "user"
+                                        ? "bg-white text-black"
+                                        : "bg-white/5 border border-white/10 text-zinc-200"
+                                }`}
+                            >
+                                {m.content}
+                            </div>
+                        </div>
+                    ))}
+
+                    {updateLoading && (
+                        <div className='max-w-[85%] mr-auto'>
+                            <div className='px-4 py-2.5 rounded-2xl text-xs bg-white/5 border border-white/10 text-zinc-400 italic'>
+                                {thinkingSteps[thinkingIndex]}
+                            </div>
+                        </div>
+                    )}
+
+                </div>
+
+                <div className='p-3 border-t border-white/10'>
+                    <div className='flex gap-2'>
+                        <input
+                            placeholder='Describe Changes...'
+                            onChange={(e)=>setPrompt(e.target.value)}
+                            value={prompt}
+                            className='flex-1 resize-none rounded-2xl px-4 py-3 bg-white/5 border border-white/10 text-white outline-none'
+                        />
+                        <button onClick={handleUpdate} disabled={updateLoading} className='px-4 py-3 rounded-2xl bg-white text-black font-medium' >
+                            <Send size={14}/>
+                        </button>
+                    </div>
+                </div>
+            </>
+
+
             </aside>
 
             <div className='flex-1 flex flex-col'>
