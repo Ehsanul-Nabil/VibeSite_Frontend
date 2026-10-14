@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { AnimatePresence, motion } from "motion/react"
 import LoginModal from '../components/LoginModal'
 import { useState } from 'react'
@@ -19,6 +19,7 @@ function Home() {
   const [openLogin,setOpenLogin] = useState(false)
   const {userData} = useSelector(state=>state.user)
   const [openProfile,setOpenProfile]=useState(false)
+  const [websites,setWebsites]=useState(null)
   const dispatch = useDispatch()
   const navigate=useNavigate()
   const handleLogOut = async () => {
@@ -32,6 +33,20 @@ function Home() {
       }
   }
 
+
+      useEffect(() => {
+        if(!userData) return 
+          const handleGetAllWebsites = async () => {
+              try {
+                  const result = await axios.get(`${serverUrl}/api/website/get-all`, { withCredentials: true })
+                  setWebsites(result.data || [])
+              } catch (error) {
+                  console.log(error)
+              }
+          }
+          handleGetAllWebsites()
+      }, [userData])
+
   return (
     <div className='relative min-h-screen bg-[#040404] text-white overflow-hidden'>
       <motion.div
@@ -41,7 +56,7 @@ function Home() {
         className='fixed top-0 left-0 right-0 z-50 backdrop-blur-xl bg-black/40 border-b border-white/10'
       >
         <div className='max-w-7xl mx-auto px-6 py-4 flex justify-between items-center'>
-          <div className='text-lg font-semibold'>
+          <div className='text-lg font-semibold' onClick={()=>navigate("/pricing")}>
             VibeSite.AI
           </div>
           <div className='flex items-center gap-5'>
@@ -50,7 +65,7 @@ function Home() {
             </div>
 
           {userData && 
-            <div className='hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-sm cursor-pointer hover:bg-white/10 transition'>
+            <div  onClick={()=>navigate("/pricing")} className='hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-sm cursor-pointer hover:bg-white/10 transition'>
               <Coins size={14} className='text-yellow-400'/>
               <span className='text-zinc-300'>Credits</span>
               <span>{userData.credits}</span>
@@ -130,10 +145,12 @@ function Home() {
           Describe your idea and let AI generate a modern, responsive, production-ready website.
         </motion.p>
 
-        <button className="px-10 py-4 mt-12 rounded-xl bg-white text-black font-semibold hover:scale-105 transition" onClick={()=>navigate("/dashboard")} >{userData?"Go to dashboard":"Get Started"}</button>
+        <button className="px-10 py-4 mt-12 rounded-xl bg-white text-black font-semibold hover:scale-105 transition" onClick={()=>userData? navigate("/dashboard"):setOpenLogin(true)} >{userData?"Go to dashboard":"Get Started"}</button>
       </section>
 
-      <section className='max-w-7xl mx-auto px-6 pb-32'>
+
+{!userData &&
+     <section className='max-w-7xl mx-auto px-6 pb-32'>
         <div className='grid grid-cols-1 md:grid-cols-3 gap-10'>
           {highlights.map((h, i) => (
             <motion.div
@@ -150,7 +167,42 @@ function Home() {
             </motion.div>
           ))}
         </div>
-      </section>
+      </section> }
+
+
+      {userData && websites?.length > 0 && (
+            <section className='max-w-7xl mx-auto px-6 pb-32'>
+                <h3 className='text-2xl font-semibold mb-6'>Your Websites</h3>
+
+                <div className='grid grid-cols-1 md:grid-cols-3 gap-6'>
+                    {websites.slice(0, 3).map((w, i) => (
+                        <motion.div
+                            key={w._id}
+                            whileHover={{ y: -6 }}
+                            onClick={() => navigate(`/editor/${w._id}`)}
+                            className="cursor-pointer rounded-2xl bg-white/5 border border-white/10 overflow-hidden"
+                        >
+                            <div className='h-40 bg-black'>
+                                <iframe
+                                    title={w.title}
+                                    srcDoc={w.latestCode}
+                                    className='w-[140%] h-[140%] scale-[0.72] origin-top-left pointer-events-none bg-white'
+                                />
+                            </div>
+                            <div className='p-4'>
+                                <h3 className='text-base font-semibold line-clamp-2'>{w.title}</h3>
+                                <p className='text-xs text-zinc-400'>
+                                    Last Updated {""}
+                                    {new Date(w.updatedAt).toLocaleDateString()}
+                                </p>
+                            </div>
+                        </motion.div>
+                    ))}
+                </div>
+            </section>
+        )}
+ 
+
 
       <footer className='border-t border-white/10 py-10 text-center text-sm text-zinc-500'>
         &copy; {new Date().getFullYear()} VibeSite.AI

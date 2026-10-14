@@ -2,7 +2,7 @@ import { ArrowLeft, Check, Rocket, Share2 } from 'lucide-react'
 import React from 'react'
 import { motion } from "motion/react"
 import { useSelector } from 'react-redux'
-import { useNavigate } from 'react-router-dom'
+import { Navigate, useNavigate } from 'react-router-dom'
 import { useEffect } from 'react'
 import { useState } from 'react'
 import axios from 'axios'
@@ -102,6 +102,7 @@ function Dashboard() {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: i * 0.05 }}
                         whileHover={{ y: -6 }}
+                        onClick={()=>navigate(`/editor/${w._id}`)}
                         className="rounded-2xl bg-white/5 border border-white/10 overflow-hidden hover:bg-white/10 transition flex flex-col"
                     >
 
@@ -140,7 +141,7 @@ function Dashboard() {
                                                 : "bg-white/10 hover:bg-white/20 border border-white/10"
                                         }`}
                                     >
-                                        {copiedId === w._id ? (
+                                        {copied ? (
                                             <>
                                                 <Check size={14} />
                                                 Link Copied

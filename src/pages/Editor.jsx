@@ -48,6 +48,23 @@ function WebsiteEditor() {
         }
     }
 
+
+     const handleDeploy = async () => {
+        try {
+            const result = await axios.get(`${serverUrl}/api/website/deploy/${WebsiteEditor._id}`, { withCredentials: true })
+            window.open(`${result.data.url}`, "_blank")
+            // setWebsite((prev) =>
+            //     prev.map((w) =>
+            //         w._id === id
+            //             ? { ...w, deployed: true, deployUrl: result.data.url }
+            //             : w
+            //     )
+            // )
+        } catch (error) {
+            console.log(error)
+        }
+    }
+
     useEffect(() => {
         if(!updateLoading)return 
         const i = setInterval(() => {
@@ -167,9 +184,11 @@ function WebsiteEditor() {
                 <div className='h-14 px-4 flex justify-between items-center border-b border-white/10 bg-black/80'>
                     <span className='text-xs text-zinc-400'>Live Preview</span>
                     <div className='flex gap-2'>
-                        <button  className='flex items-center gap-2 px-4 py-1.5 rounded-lg bg-linear-to-r from-indigo-500 to-purple-500 text-sm font-semibold hover:scale-105 transition'>
+                        {website.deployed ? "":
+                        <button onClick={handleDeploy} className='flex items-center gap-2 px-4 py-1.5 rounded-lg bg-linear-to-r from-indigo-500 to-purple-500 text-sm font-semibold hover:scale-105 transition'>
                             <Rocket size={14} /> Deploy
                         </button>
+                        }
                         <button className='p-2 lg:hidden' onClick={()=>setShowChat(true)}><MessageSquare size={18}/> </button>
                         <button className='p-2' onClick={()=>setShowCode(true)}><Code2 size={18} /></button>
                         <button className='p-2' onClick={()=>setShowFullPreview(true)} ><Monitor size={18} /></button>
