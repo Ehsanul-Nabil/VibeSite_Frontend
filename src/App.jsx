@@ -8,7 +8,12 @@ import Generate from './pages/Generate';
 import WebsiteEditor from './pages/Editor';
 import LiveSite from './pages/LiveSite';
 import Pricing from './pages/Pricing';
-export const serverUrl = "http://localhost:8000"
+// export const serverUrl = "http://localhost:8000"
+const isDevelopment = import.meta.env?.MODE === "development" 
+
+export const serverUrl = isDevelopment
+    ? "http://localhost:8000"
+    : (import.meta.env?.VITE_SERVER_URL || "https://vibesite-backend.onrender.com");
 
 const App = () => {
 
