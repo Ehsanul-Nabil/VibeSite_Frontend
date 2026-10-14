@@ -1,4 +1,4 @@
-import { ArrowLeft, Rocket, Share2 } from 'lucide-react'
+import { ArrowLeft, Check, Rocket, Share2 } from 'lucide-react'
 import React from 'react'
 import { motion } from "motion/react"
 import { useSelector } from 'react-redux'
@@ -14,16 +14,30 @@ function Dashboard() {
   const [websites, setWebsites] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
+  const [copiedId,setCopiedId]=useState(null)
 
 
-  const handleDeploy = async (id) => {
-    try {
-        const result = await axios.get(`${serverUrl}/api/website/deploy/${id}`, { withCredentials: true })
-        window.open(`${result.data.url}`, "_blank")
-    } catch (error) {
-        console.log(error)
+   const handleDeploy = async (id) => {
+        try {
+            const result = await axios.get(`${serverUrl}/api/website/deploy/${id}`, { withCredentials: true })
+            window.open(`${result.data.url}`, "_blank")
+            setWebsites((prev) =>
+                prev.map((w) =>
+                    w._id === id
+                        ? { ...w, deployed: true, deployUrl: result.data.url }
+                        : w
+                )
+            )
+        } catch (error) {
+            console.log(error)
+        }
     }
-  }
+
+    const handleCopy = async (site) => {
+        await navigator.clipboard.writeText(site.deployUrl)
+        setCopiedId(site._id)
+        setTimeout(() => setCopiedId(null), 2000)
+    }
 
     useEffect(() => {
         const handleGetAllWebsites = async () => {
@@ -79,8 +93,10 @@ function Dashboard() {
 
         {!loading && !error && websites?.length > 0 && (
             <div className='grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-8'>
-                {websites.map((w, i) => (
-                    <motion.div
+                {websites.map((w, i) => {
+
+                  const copied=copiedId===w._id
+                   return  <motion.div
                         key={i}
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -112,15 +128,36 @@ function Dashboard() {
                                     <Rocket size={18}/> Deploy
                                 </button>
                             ) : (
-                                <button className="mt-auto flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold bg-white/10 hover:bg-white/20 transition">
-                                    <Share2 size={18}/> Share Link
-                                </button>
+                                // <button className="mt-auto flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold bg-white/10 hover:bg-white/20 transition">
+                                //     <Share2 size={18}/> Share Link
+                                // </button>
+                                           <motion.button 
+                                        whileTap={{ scale: 0.95 }}
+                                        onClick={() => handleCopy(w)}
+                                        className={`mt-auto flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+                                            copiedId === w._id
+                                                ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
+                                                : "bg-white/10 hover:bg-white/20 border border-white/10"
+                                        }`}
+                                    >
+                                        {copiedId === w._id ? (
+                                            <>
+                                                <Check size={14} />
+                                                Link Copied
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Share2 size={14} />
+                                                Share Link
+                                            </>
+                                        )}
+                                    </motion.button>
                             )}
 
                         </div>
 
                     </motion.div>
-                ))}
+})}
             </div>
         )}
 
