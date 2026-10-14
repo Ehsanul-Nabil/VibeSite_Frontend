@@ -9,11 +9,13 @@ import WebsiteEditor from './pages/Editor';
 import LiveSite from './pages/LiveSite';
 import Pricing from './pages/Pricing';
 // export const serverUrl = "http://localhost:8000"
-const isDevelopment = import.meta.env?.MODE === "development" 
+const nodeEnv = import.meta.env?.VITE_NODE_ENV;
 
-export const serverUrl = isDevelopment
+export const serverUrl = 
+  nodeEnv === "development"
     ? "http://localhost:8000"
-    : (import.meta.env?.VITE_SERVER_URL || "https://vibesite-backend.onrender.com");
+    : (import.meta.env?.VITE_SERVER_URL || "https://vibesite-backend.onrender.com")
+
 
 const App = () => {
 
